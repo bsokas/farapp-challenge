@@ -1,7 +1,18 @@
 package main
 
-import "serverstuff"
+import (
+  "serverstuff"
+  "os"
+  "fmt"
+)
 
 func main(){
-  serverstuff.FetchNameList(500)
+  names, nameErr := serverstuff.FetchNameList(500)
+  if nameErr != nil {
+    fmt.Println(nameErr.Error())
+    os.Exit(1)
+  }
+
+  serverstuff.CreateList(names)
+  serverstuff.StartServer()
 }

@@ -17,7 +17,7 @@ type Name struct {
   Region string `json:"region"`
 }
 
-func FetchNameList(quantity int) error {
+func FetchNameList(quantity int) ([]Name, error) {
   rounds := getNumberOfRounds(quantity)
   amount := DefaultAmount
   allNames := make([]Name, 0)
@@ -26,12 +26,12 @@ func FetchNameList(quantity int) error {
     fullUrl := fmt.Sprintf("%s?amount=%d", NameEndpoint, amount)
     resp, respErr := http.Get(fullUrl)
     if respErr != nil {
-      return respErr
+      return allNames, respErr
     }
 
     names, nameErr := ExtractBody(resp)
     if nameErr != nil {
-      return nameErr
+      return allNames, nameErr
     }
 
     allNames = append(allNames, names...)
@@ -40,10 +40,11 @@ func FetchNameList(quantity int) error {
     }
   }
 
-  for i, name := range allNames {
+  //Leaving the for loop in place for debugging
+  /*for i, name := range allNames {
     fmt.Printf("%d) %v\n", i + 1, name)
-  }
-  return nil
+  }*/
+  return allNames, nil
 }
 
 func ExtractBody(resp *http.Response) ([]Name, error) {
