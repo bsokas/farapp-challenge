@@ -8,6 +8,7 @@ import (
 )
 
 const NameEndpoint string = "https://uinames.com/api/"
+const DefaultAmount int = 500
 
 type Name struct {
   Name string `json:"name"`
@@ -17,20 +18,30 @@ type Name struct {
 }
 
 func FetchNameList(quantity int) error {
-  fullUrl := fmt.Sprintf("%s?amount=%d", NameEndpoint, 500)
+  rounds := getNumberOfRounds(quantity)
+  amount := DefaultAmount
+  allNames := make([]Name, 0)
 
-  resp, respErr := http.Get(fullUrl)
-  if respErr != nil {
-    return respErr
+  for i := 0; i < rounds; i++ {
+    fullUrl := fmt.Sprintf("%s?amount=%d", NameEndpoint, amount)
+    resp, respErr := http.Get(fullUrl)
+    if respErr != nil {
+      return respErr
+    }
+
+    names, nameErr := ExtractBody(resp)
+    if nameErr != nil {
+      return nameErr
+    }
+
+    allNames = append(allNames, names...)
+    if quantity - amount < DefaultAmount {
+      amount = quantity - amount
+    }
   }
 
-  names, nameErr := ExtractBody(resp)
-  if nameErr != nil {
-    return nameErr
-  }
-
-  for _, name := range names {
-    fmt.Printf("* %v\n", name)
+  for i, name := range allNames {
+    fmt.Printf("%d) %v\n", i + 1, name)
   }
   return nil
 }
@@ -49,4 +60,18 @@ func ExtractBody(resp *http.Response) ([]Name, error) {
   }
 
   return names, nil
+}
+
+func getNumberOfRounds(quantity int) int {
+  rounds := 1
+  if quantity > DefaultAmount {
+    switch quantity % DefaultAmount > 0 {
+    case true:
+      rounds = (quantity / DefaultAmount) + 1
+    case false:
+      rounds = (quantity / DefaultAmount)
+    }
+  }
+
+  return rounds
 }
